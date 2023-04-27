@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lagrange Interpolation Demo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://www.desmos.com/api/v1.8/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+</head>
+
+<body>
+    <p>Given a set of coordinates, a continuous curve can be created using <a href="https://mathworld.wolfram.com/LagrangeInterpolatingPolynomial.html">Lagrange Interpolation</a> that passes through all the given points as long as:</p>
+    <ol>
+        <li>The coordinates are all real numbers</li>
+        <li>Each x-value corresponds to exactly one y-value (vertical line test)</li>
+    </ol>
+    <p>Enter pairs of coordinates separated by a new line:</p>
+    <textarea id="input" placeholder="1,3
+2,4
+7,11" style="height: 200px"></textarea>
+    <br>
+    <button onclick="makeGraph()">Create graph</button>
+    <div id="calculator" style="width: 100%; height: 800px;"></div>
+    <script>
+        function makeGraph() {
+            let input = document.querySelector("#input").value
+            if (input.trim() == "") input = document.querySelector("#input").placeholder;
+            input = input.replaceAll("(", "");
+            input = input.replaceAll(")", "");
+            let xVals = [], yVals = [];
+            console.log(input.split("\n"))
+            input.split("\n").forEach(line => {
+                xVals.push(parseFloat(line.split(",")[0].trim()))
+                yVals.push(parseFloat(line.split(",")[1].trim()))
+            })
+
+            let equation = "0";
+            for (let xIndex = 0; xIndex < xVals.length; xIndex++) {
+                equation += " + ";
+                let numerator = "[";
+                let denominator = "[";
+                for (let j = 0; j < xVals.length; j++) {
+                    if (j == xIndex) continue;
+                    numerator += `(x - ${xVals[j]})`;
+                    denominator += `(${xVals[xIndex]} - ${xVals[j]})`;
+                }
+                numerator += "]";
+                denominator += "]";
+                equation += numerator + "/" + denominator + "*" + yVals[xIndex];
+            }
+            equation = equation.replace("0 + ", "y = ");
+            equation = equation.replaceAll("[]", "1");
+            let elt = document.querySelector("#calculator");
+            if (!window.calculatorObj) {
+                window.calculatorObj = Desmos.GraphingCalculator(elt);
+            }
+            if (!window.lastGraphId) {
+                window.lastGraphId = 1;
+            }
+            window.calculatorObj.setExpression({
+                id: 'graph' + window.lastGraphId,
+                latex: equation
+            });
+            window.lastGraphId++;
+        }
+        function runWhenAPILoaded(cb) {
+                if (!window.Desmos || !window.Desmos.Calculator) {
+                    setTimeout(runWhenAPILoaded, 1, cb);
+                    return;
+                }
+                cb();
+            }
+            runWhenAPILoaded(function () {
+                window.$ = Desmos.$;
+                window.TestBridge = {};
+
+                let script = document.getElementById('main-script');
+                if (script) {
+                    eval.call(window, script.textContent);
+                }
+            })
+    </script>
+</body>
+</html>
